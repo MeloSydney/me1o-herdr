@@ -1,0 +1,73 @@
+id = "herdr-bar"
+name = "Bar"
+version = "0.13.0"
+# Requires startup hooks and agent session metadata from Herdr 0.9.
+min_herdr_version = "0.9.0"
+description = "Cmd+K command bar with agent icons, fuzzy search, and optional automatic tab titles"
+platforms = ["linux", "macos", "windows"]
+
+# The plugin is a Rust binary at bin/herdr-bar (bin/herdr-bar.exe on Windows).
+# On install (updating is reinstalling), Herdr runs these steps in the plugin
+# directory: they download the release binary for this version and platform,
+# check it against the release's SHA256SUMS, and fall back to
+# `cargo build --release` (Rust 1.88+). Herdr
+# resolves a command path with a separator from the plugin directory. On
+# Windows the step also leaves an extensionless bin/herdr-bar copy, so the
+# shared commands below run there as written.
+[[build]]
+command = ["sh", "scripts/install.sh"]
+platforms = ["linux", "macos"]
+
+[[build]]
+command = ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "scripts/install.ps1"]
+platforms = ["windows"]
+
+# One action for every platform, so one keybinding works everywhere. Herdr
+# starts manifest commands without a shell and Windows has no `sh`, so the
+# binary opens the popup itself (`--open`). On Windows, install.ps1 puts
+# bin\herdr-bar beside bin\herdr-bar.exe, as for the bar pane.
+[[actions]]
+id = "open"
+title = "Open bar"
+description = "Fuzzy-jump to any tab, pane, or agent"
+contexts = ["global"]
+command = ["bin/herdr-bar", "--open"]
+
+# Kept so that Windows configs from 0.8 and 0.9 that bind it still work.
+[[actions]]
+id = "open-windows"
+title = "Open bar"
+description = "Fuzzy-jump to any tab, pane, or agent"
+contexts = ["global"]
+platforms = ["windows"]
+command = ["bin/herdr-bar.exe", "--open"]
+
+[[panes]]
+id = "bar"
+title = "Bar"
+description = "Fuzzy-jump to any tab, pane, or agent"
+placement = "popup"
+width = "74%"
+height = "62%"
+command = ["bin/herdr-bar"]
+
+[[startup]]
+command = ["bin/herdr-bar", "--start-titles"]
+
+[[events]]
+on = "pane.agent_detected"
+command = ["bin/herdr-bar", "--start-titles"]
+
+[[actions]]
+id = "start-titles"
+title = "Start tab watcher"
+description = "Start task title and tab status updates enabled in the plugin config"
+contexts = ["global"]
+command = ["bin/herdr-bar", "--start-titles", "--resume"]
+
+[[actions]]
+id = "stop-titles"
+title = "Stop tab watcher"
+description = "Stop this server's title and status watcher, restoring bare tab names"
+contexts = ["global"]
+command = ["bin/herdr-bar", "--stop-titles"]
